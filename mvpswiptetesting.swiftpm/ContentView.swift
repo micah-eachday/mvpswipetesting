@@ -8,7 +8,6 @@
 import Foundation
 import SwiftUI
 import OrderedCollections
-import OrderedCollections
 
 struct xpCounter {
     static var xpInfo: [Int] = [1, 0, 0]
@@ -118,144 +117,8 @@ struct count {
     @State var doCount: Int = doInfo.originalDoList.count
 }
 
-struct SheetPresentationForSwiftUI<Content>: UIViewRepresentable where Content: View {
-    
-    @Binding var isPresented: Bool
-    let onDismiss: (() -> Void)?
-    let detents: [UISheetPresentationController.Detent]
-    let content: Content
-    
-    
-    init(
-        _ isPresented: Binding<Bool>,
-        onDismiss: (() -> Void)? = nil,
-        detents: [UISheetPresentationController.Detent] = [.medium()],
-        @ViewBuilder content: () -> Content
-    ) {
-        self._isPresented = isPresented
-        self.onDismiss = onDismiss
-        self.detents = detents
-        self.content = content()
-    }
-    
-    func makeUIView(context: Context) -> UIView {
-        let view = UIView()
-        return view
-    }
-    
-    func updateUIView(_ uiView: UIView, context: Context) {
-        
-        // Create the UIViewController that will be presented by the UIButton
-        let viewController = UIViewController()
-        
-        // Create the UIHostingController that will embed the SwiftUI View
-        let hostingController = UIHostingController(rootView: content)
-        
-        // Add the UIHostingController to the UIViewController
-        viewController.addChild(hostingController)
-        viewController.view.addSubview(hostingController.view)
-        
-        // Set constraints
-        hostingController.view.translatesAutoresizingMaskIntoConstraints = false
-        hostingController.view.leftAnchor.constraint(equalTo: viewController.view.leftAnchor).isActive = true
-        hostingController.view.topAnchor.constraint(equalTo: viewController.view.topAnchor).isActive = true
-        hostingController.view.rightAnchor.constraint(equalTo: viewController.view.rightAnchor).isActive = true
-        hostingController.view.bottomAnchor.constraint(equalTo: viewController.view.bottomAnchor).isActive = true
-        hostingController.didMove(toParent: viewController)
-        
-        // Set the presentationController as a UISheetPresentationController
-        if let sheetController = viewController.presentationController as? UISheetPresentationController {
-            sheetController.detents = detents
-            sheetController.prefersGrabberVisible = true
-            sheetController.prefersScrollingExpandsWhenScrolledToEdge = false
-            sheetController.largestUndimmedDetentIdentifier = .medium
-        }
-        
-        // Set the coordinator (delegate)
-        // We need the delegate to use the presentationControllerDidDismiss function
-        viewController.presentationController?.delegate = context.coordinator
-        
-        
-        if isPresented {
-            // Present the viewController
-            uiView.window?.rootViewController?.present(viewController, animated: true)
-        } else {
-            // Dismiss the viewController
-            uiView.window?.rootViewController?.dismiss(animated: true)
-        }
-        
-    }
-    
-    /* Creates the custom instance that you use to communicate changes
-    from your view controller to other parts of your SwiftUI interface.
-     */
-    func makeCoordinator() -> Coordinator {
-        Coordinator(isPresented: $isPresented, onDismiss: onDismiss)
-    }
-    
-    class Coordinator: NSObject, UISheetPresentationControllerDelegate {
-        @Binding var isPresented: Bool
-        let onDismiss: (() -> Void)?
-        
-        init(isPresented: Binding<Bool>, onDismiss: (() -> Void)? = nil) {
-            self._isPresented = isPresented
-            self.onDismiss = onDismiss
-        }
-        
-        func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
-            isPresented = false
-            if let onDismiss = onDismiss {
-                onDismiss()
-            }
-        }
-        
-    }
-    
-}
-
-struct sheetWithDetentsViewModifier<SwiftUIContent>: ViewModifier where SwiftUIContent: View {
-    
-    @Binding var isPresented: Bool
-    let onDismiss: (() -> Void)?
-    let detents: [UISheetPresentationController.Detent]
-    let swiftUIContent: SwiftUIContent
-    
-    init(isPresented: Binding<Bool>, detents: [UISheetPresentationController.Detent] = [.medium()] , onDismiss: (() -> Void)? = nil, content: () -> SwiftUIContent) {
-        self._isPresented = isPresented
-        self.onDismiss = onDismiss
-        self.swiftUIContent = content()
-        self.detents = detents
-    }
-    
-    func body(content: Content) -> some View {
-        ZStack {
-            SheetPresentationForSwiftUI($isPresented,onDismiss: onDismiss, detents: detents) {
-                swiftUIContent
-            }.fixedSize()
-            content
-        }
-    }
-}
-
-extension View {
-    
-    func sheetWithDetents<Content>(
-        isPresented: Binding<Bool>,
-        detents: [UISheetPresentationController.Detent],
-        onDismiss: (() -> Void)?,
-        content: @escaping () -> Content) -> some View where Content : View {
-            modifier(
-                sheetWithDetentsViewModifier(
-                    isPresented: isPresented,
-                    detents: detents,
-                    onDismiss: onDismiss,
-                    content: content)
-            )
-        }
-}
-
 struct ContentView: View {
-    @State private var showingPopover = false
+    @State private var showingDoCard: Bool = false
     
     @State var originalList = doInfo.originalDoList
     
@@ -264,7 +127,7 @@ struct ContentView: View {
     
     @State var currentProgress: CGFloat = 0.0
     
-    @State private var date = Date.now
+    @State var date = Date.now
     
     let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -299,7 +162,7 @@ struct ContentView: View {
     
     @State private var isPresented = false
     
-    @State private var doNameForCard: String = "Do Name Goes Here"
+    @State var doNameForCard: String = "Do Name Goes Here"
     
     var body: some View {
         HStack {
@@ -408,7 +271,7 @@ struct ContentView: View {
                 // Todo section
                 VStack(alignment: .leading) {
                     Label {
-                        Text("Todo")
+                        Text("Morning")
                           .font(Font.custom("SFProDisplay-Semibold", size: 30))
                           .foregroundColor(Color.white)
                           .frame(minWidth: 91.00, minHeight: 26.00, alignment: .leading)
@@ -487,6 +350,7 @@ struct ContentView: View {
                                             VStack(alignment: .leading) {
                                                 Text("\(doName)")
                                                     .font(Font.custom("SFProDisplay-Medium", size: 22))
+                                                    .padding(.top, 5)
                                                 Label {
                                                     if doInfo.doStreaks[doName] == 0 {
                                                         Text("\(doInfo.doDescriptions[doName] ?? "")")
@@ -495,7 +359,7 @@ struct ContentView: View {
                                                             .foregroundColor(.gray)
                                                             .lineLimit(1)
                                                             .truncationMode(.tail)
-                                                            .padding(.leading, -10)
+                                                            .padding(.leading, -5)
                                                     } else {
                                                         Text("\(doInfo.doDescriptions[doName] ?? "")")
                                                             .frame(width: 150, alignment: .leading)
@@ -503,7 +367,7 @@ struct ContentView: View {
                                                             .foregroundColor(.StreakTextOrange)
                                                             .lineLimit(1)
                                                             .truncationMode(.tail)
-                                                            .padding(.leading, -10)
+                                                            .padding(.leading, -5)
                                                     }
                                                 } icon: {
                                                     if doInfo.doStreaks[doName] == 0 {
@@ -514,6 +378,7 @@ struct ContentView: View {
                                                             .mask(Image(systemName: "flame.fill"))
                                                     }
                                                 }
+                                                .padding(.bottom, 5)
                                                 .frame(maxHeight: 20)
                                             }
                                             .padding(.leading, 5)
@@ -598,50 +463,11 @@ struct ContentView: View {
                     .padding(.top, -10)
                     .frame(maxHeight: .infinity)
                 }
-                
+                //.sheet(isPresented: isPresented) {
+                  //
+                //CustomDateView(dateInfo: infoForDoCard)
+                //}
             }
-            .sheetWithDetents(
-                isPresented: $isPresented,
-                detents: [.medium(),.large()]
-            ) {
-                print("The sheet has been dismissed")
-            } content: {
-                Group {
-                    let _ = print(doNameForCard)
-                    let _ = print(doInfo.doGIFs[doNameForCard] ?? "")
-                    VStack {
-                        GifImage(doInfo.doGIFs[doNameForCard] ?? "")
-                            .scaledToFit()
-                            .frame(alignment: .top)
-                    }
-                    VStack(alignment: .leading) {
-                        Text("\(doNameForCard)")
-                          .font(Font.custom("SFProDisplay-Bold", size: 34))
-                          .foregroundColor(Color.white)
-                          .frame(minWidth: 259.00, minHeight: 41.00, alignment: .bottomLeading)
-                          .lineLimit(1)
-                        Text("\(doInfo.doDescriptions[doNameForCard] ?? "")")
-                          .font(.system(size: 18))
-                          .foregroundColor(Color.white)
-                          .frame(minWidth: 320.00, minHeight: 42.00, alignment: .topLeading)
-                          .opacity(0.69)
-                          .lineLimit(2)
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text("Alarm")
-                            }
-                            VStack(alignment: .trailing) {
-                                Text("\(timeStr)")
-                            }
-                        }
-                        .frame(maxWidth: .infinity)
-                        .border(.green)
-                    }
-                    .padding()
-                }
-                .frame(alignment: .top)
-            }
-            .padding(.top)
             .navigationBarHidden(true)
         } // closing brace for NavigationView
     } // closing brace for body

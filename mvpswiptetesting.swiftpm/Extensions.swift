@@ -21,6 +21,7 @@ extension Color {
     static let GreenBackground = Color("GreenBackground")
     static let RedBackground = Color("RedBackground")
     static let StreakTextOrange = Color("StreakTextOrange")
+    static let AlarmInfoBackgroundGray = Color("AlarmInfoBackgroundGray")
 }
 
 extension View{
